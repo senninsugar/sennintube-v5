@@ -21,11 +21,16 @@ router.get('/', async (req, res) => {
             videos = invidiousResults.map(v => ({
                 id: v.videoId,
                 title: v.title,
+                // サムネイルをYouTube公式URLに固定
                 thumbnails: [{ 
-                    url: v.videoThumbnails ? v.videoThumbnails[0].url : `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` 
+                    url: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` 
                 }],
-                // テンプレートの v.author.name に合わせる
-                author: { name: v.author || '不明なチャンネル' }
+                // テンプレートの v.author.name とアイコンに対応
+                author: { 
+                    name: v.author || '不明なチャンネル',
+                    // Invidiousのデータからアイコンを取得、なければ汎用画像
+                    thumbnail: v.authorThumbnails ? v.authorThumbnails[0].url : `https://ui-avatars.com/api/?name=${encodeURIComponent(v.author || 'U')}&background=random`
+                }
             }));
         } else {
             // 配列ではなかった（エラーや空レスポンス）場合はエラーを投げて catch 節へ移動
@@ -43,9 +48,12 @@ router.get('/', async (req, res) => {
             // データを標準化
             videos = Array.isArray(searchData) ? searchData.map(v => ({
                 id: v.id || v.videoId,
-                title: v.title?.toString() || v.title || '無題',
-                thumbnails: v.thumbnails || [{ url: `https://i.ytimg.com/vi/${v.id || v.videoId}/mqdefault.jpg` }],
-                author: { name: v.author?.name || v.author || '不明なチャンネル' }
+                title: v.title?.toString() || v.title,
+                thumbnails: [{ url: `https://i.ytimg.com/vi/${v.id || v.videoId}/mqdefault.jpg` }],
+                author: { 
+                    name: v.author?.name || v.author || '不明なチャンネル',
+                    thumbnail: v.author?.thumbnails ? v.author.thumbnails[0].url : `https://ui-avatars.com/api/?name=${encodeURIComponent(v.author?.name || 'U')}&background=random`
+                }
             })) : [];
         } catch (ytError) {
             console.error("Backup YouTube Search Error:", ytError);
