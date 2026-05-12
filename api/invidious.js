@@ -15,8 +15,16 @@ const INSTANCE = [
 async function fetchInvidious(endpoint) {
     for (let url of INSTANCE) {
         try {
-            const res = await axios.get(`${url}${endpoint}`, { timeout: 5000 });
-            return res.data;
+            // URLの末尾にスラッシュがある場合を考慮し、適切に結合
+            const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+            const res = await axios.get(`${baseUrl}${endpoint}`, { timeout: 5000 });
+            
+            // レスポンスが配列であることを確認してから返す
+            if (res.data && Array.isArray(res.data)) {
+                return res.data;
+            }
+            // 配列でない場合は次のインスタンスへ
+            continue;
         } catch (e) {
             continue;
         }
