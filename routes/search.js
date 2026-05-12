@@ -43,8 +43,8 @@ router.get('/', async (req, res) => {
             // データを標準化
             videos = Array.isArray(searchData) ? searchData.map(v => ({
                 id: v.id || v.videoId,
-                title: v.title?.toString() || v.title,
-                thumbnails: v.thumbnails || [{ url: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg` }],
+                title: v.title?.toString() || v.title || '無題',
+                thumbnails: v.thumbnails || [{ url: `https://i.ytimg.com/vi/${v.id || v.videoId}/mqdefault.jpg` }],
                 author: { name: v.author?.name || v.author || '不明なチャンネル' }
             })) : [];
         } catch (ytError) {
