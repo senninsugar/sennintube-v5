@@ -16,18 +16,15 @@
     <main class="max-w-5xl mx-auto p-4 flex flex-col gap-6">
         <% videos.forEach(v => { %>
             <a href="/watch?v=<%= v.id %>" class="flex gap-4 group">
-                <div class="w-60 flex-shrink-0">
-                    <img src="<%= v.thumbnails && v.thumbnails.length > 0 ? v.thumbnails[0].url : '' %>" 
-                         class="w-full aspect-video object-cover rounded-lg group-hover:opacity-80 transition-opacity" 
-                         alt="<%= v.title %>">
+                <div class="relative flex-shrink-0 w-60 aspect-video">
+                    <img src="<%= v.thumbnails[0].url %>" class="w-full h-full object-cover rounded-lg group-hover:rounded-none transition-all">
                 </div>
-                <div>
+                <div class="flex flex-col gap-2">
                     <h3 class="text-lg font-bold line-clamp-2"><%= v.title %></h3>
-                    <div class="flex items-center gap-2 mt-2">
-                        <div class="w-6 h-6 bg-stone-700 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-xs">person</span>
-                        </div>
-                        <p class="text-sm text-gray-400"><%= v.author ? v.author.name : '不明なチャンネル' %></p>
+                    <div class="flex items-center gap-2">
+                        <!-- チャンネルアイコンを表示 -->
+                        <img src="<%= v.author.thumbnail %>" class="w-6 h-6 rounded-full bg-gray-700">
+                        <p class="text-sm text-gray-400 hover:text-white transition"><%= v.author.name %></p>
                     </div>
                 </div>
             </a>
