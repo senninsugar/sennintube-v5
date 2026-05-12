@@ -6,7 +6,8 @@ router.get('/', async (req, res) => {
     const query = req.query.q;
     const yt = await getYouTube();
     const results = await yt.search(query);
-    res.render('search', { videos: results.videos, query });
+    const videos = results.videos || results.contents || [];
+    res.render('search', { videos: videos, query });
 });
 
 module.exports = router;
