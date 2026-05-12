@@ -24,7 +24,8 @@ router.get('/', async (req, res) => {
                 thumbnails: [{ 
                     url: v.videoThumbnails ? v.videoThumbnails[0].url : `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` 
                 }],
-                author: { name: v.author }
+                // テンプレートの v.author.name に合わせる
+                author: { name: v.author || '不明なチャンネル' }
             }));
         } else {
             // 配列ではなかった（エラーや空レスポンス）場合はエラーを投げて catch 節へ移動
@@ -35,15 +36,24 @@ router.get('/', async (req, res) => {
         try {
             const yt = await getYouTube();
             const results = await yt.search(query);
-            // youtubei.js の結果も念のため配列チェックを行う
-            videos = (results && results.videos && Array.isArray(results.videos)) ? results.videos : [];
+            
+            // youtubei.js の検索結果 (results.videos もしくは results.contents) を確認
+            const searchData = results.videos || results.contents || [];
+            
+            // データを標準化
+            videos = Array.isArray(searchData) ? searchData.map(v => ({
+                id: v.id || v.videoId,
+                title: v.title?.toString() || v.title,
+                thumbnails: v.thumbnails || [{ url: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg` }],
+                author: { name: v.author?.name || v.author || '不明なチャンネル' }
+            })) : [];
         } catch (ytError) {
             console.error("Backup YouTube Search Error:", ytError);
             videos = [];
         }
     }
 
-    // 最終的に取得した videos で描画（空でも 502 エラーにはなりません）
+    // 最終的に取得した videos で描画
     res.render('search', { videos, query });
 });
 
