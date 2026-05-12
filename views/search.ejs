@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body class="bg-[#0f0f0f] text-white">
+    <nav class="p-4 border-b border-gray-800 flex items-center gap-4">
+        <a href="/" class="text-xl font-bold">仙人Tube</a>
+        <form action="/search" class="flex-1 max-w-xl flex bg-[#121212] border border-gray-700 rounded-full px-4 py-1">
+            <input type="text" name="q" value="<%= query %>" class="bg-transparent w-full outline-none">
+            <button><span class="material-symbols-outlined mt-1">search</span></button>
+        </form>
+    </nav>
+    <main class="max-w-5xl mx-auto p-4 flex flex-col gap-6">
+        <% videos.forEach(v => { %>
+            <a href="/watch?v=<%= v.id %>" class="flex gap-4">
+                <img src="<%= v.thumbnails[0].url %>" class="w-60 aspect-video object-cover rounded-lg">
+                <div>
+                    <h3 class="text-lg font-bold"><%= v.title %></h3>
+                    <p class="text-sm text-gray-400"><%= v.author.name %></p>
+                </div>
+            </a>
+        <% }) %>
+    </main>
+</body>
+</html>
