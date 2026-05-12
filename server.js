@@ -12,7 +12,8 @@ const searchRouter = require('./routes/search');
 const watchRouter = require('./routes/watch');
 const suggestRouter = require('./routes/suggests');
 
-app.get('/', (req, res) => res.render('home'));
+// ルート定義の重複を修正
+app.use('/', homeRouter);
 app.use('/search', searchRouter);
 app.use('/watch', watchRouter);
 app.use('/api/suggests', suggestRouter);
