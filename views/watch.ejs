@@ -13,29 +13,35 @@
                 <h2 class="text-xl font-bold">動画詳細</h2>
                 <div class="mt-8">
                     <h3 class="font-bold border-b border-gray-800 pb-2">コメント</h3>
-                    <% comments.forEach(c => { %>
-                        <div class="flex gap-3 my-4">
-                            <img src="<%= c.authorThumb %>" class="w-10 h-10 rounded-full">
-                            <div>
-                                <p class="text-xs text-gray-400"><%= c.author %></p>
-                                <p class="text-sm"><%= c.text %></p>
+                    <% if (typeof comments !== 'undefined' && comments.length > 0) { %>
+                        <% comments.forEach(c => { %>
+                            <div class="flex gap-3 my-4">
+                                <img src="<%= c.authorThumb %>" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="text-xs text-gray-400"><%= c.author %></p>
+                                    <p class="text-sm"><%= c.text %></p>
+                                </div>
                             </div>
-                        </div>
-                    <% }) %>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-gray-500 py-4">コメントはありません。</p>
+                    <% } %>
                 </div>
             </div>
         </div>
         <div class="w-full lg:w-96">
             <h3 class="font-bold mb-4">関連動画</h3>
-            <% related.forEach(rv => { %>
-                <a href="/watch?v=<%= rv.id %>" class="flex gap-2 mb-3">
-                    <img src="<%= rv.thumbnail %>" class="w-40 aspect-video object-cover rounded">
-                    <div class="text-xs">
-                        <p class="font-bold line-clamp-2"><%= rv.title %></p>
-                        <p class="text-gray-400"><%= rv.author %></p>
-                    </div>
-                </a>
-            <% }) %>
+            <% if (typeof related !== 'undefined' && related.length > 0) { %>
+                <% related.forEach(rv => { %>
+                    <a href="/watch?v=<%= rv.id %>" class="flex gap-2 mb-3">
+                        <img src="<%= rv.thumbnail %>" class="w-40 aspect-video object-cover rounded">
+                        <div class="text-xs">
+                            <p class="font-bold line-clamp-2"><%= rv.title %></p>
+                            <p class="text-gray-400"><%= rv.author %></p>
+                        </div>
+                    </a>
+                <% }) %>
+            <% } %>
         </div>
     </main>
 </body>
