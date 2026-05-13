@@ -9,6 +9,7 @@ async function getVideoInfo(videoId) {
             const res = await axios.get(`${baseUrl}/videos/${videoId}`, { timeout: 3000 });
             if (res.data) {
                 const v = res.data;
+                // Invidiousのデータ構造をEJS側の変数名に正確にマッピング
                 return {
                     title: v.title,
                     viewCount: v.viewCount,
