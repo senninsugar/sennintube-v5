@@ -8,12 +8,26 @@
     <nav class="p-4 border-b border-gray-800"><a href="/" class="text-xl font-bold">仙人Tube</a></nav>
     <main class="flex flex-col lg:flex-row p-6 gap-6">
         <div class="flex-1">
-            <!-- プレイヤーコンテナ -->
             <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden">
-                <!-- 初期状態は既存のstream（JSで書き換えます） -->
-                <video id="videoPlayer" src="<%= streamUrl %>" controls autoplay class="w-full h-full"></video>
+                <!-- 設定に応じてここにプレイヤーが挿入されます -->
             </div>
+            <script>
+                (function() {
+                    const videoId = "<%= videoId %>";
+                    const streamUrl = "<%= streamUrl %>";
+                    const method = localStorage.getItem('sennin_play_method') || 'nocookie';
+                    const container = document.getElementById('playerContainer');
 
+                    if (method === 'stream' && streamUrl && streamUrl !== 'null') {
+                        container.innerHTML = `<video src="${streamUrl}" controls autoplay class="w-full h-full"></video>`;
+                    } else if (method === 'education') {
+                        container.innerHTML = `<iframe src="https://www.youtubeeducation.com/embed/${videoId}?autoplay=1" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                    } else {
+                        // nocookie (デフォルト)
+                        container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                    }
+                })();
+            </script>
             <div class="mt-6">
                 <h2 class="text-xl font-bold">動画詳細</h2>
                 <div class="mt-8">
@@ -49,38 +63,5 @@
             <% } %>
         </div>
     </main>
-
-    <script>
-        (function() {
-            // URLパラメータから動画IDを取得
-            const urlParams = new URLSearchParams(window.location.search);
-            const videoId = urlParams.get('v');
-            
-            // localStorageから設定を取得
-            const playMethod = localStorage.getItem('sennin_play_method') || 'nocookie';
-            const container = document.getElementById('playerContainer');
-            
-            if (!videoId) return;
-
-            // 再生方法に応じたURLの生成とプレイヤーの切り替え
-            if (playMethod === 'nocookie') {
-                container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            } 
-            else if (playMethod === 'education') {
-                container.innerHTML = `<iframe src="https://www.youtubeeducation.com/embed/${videoId}?autoplay=1" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            } 
-            else {
-                // streamの場合は既存のvideoタグをそのまま使用（srcはEJSで注入済み）
-                console.log('Playing with native stream');
-            }
-
-            // 履歴保存設定の確認
-            const saveHistory = localStorage.getItem('sennin_save_history') === 'true';
-            if (saveHistory) {
-                // ここに履歴保存のロジック（サーバーへのfetch等）を追加可能
-                console.log('History recording is enabled');
-            }
-        })();
-    </script>
 </body>
 </html>
