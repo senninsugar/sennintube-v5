@@ -41,3 +41,4 @@ async function searchInvidious(query) {
 }
 
 module.exports = { getTrending, searchInvidious, INSTANCE };
+
