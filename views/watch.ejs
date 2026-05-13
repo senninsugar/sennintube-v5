@@ -13,7 +13,7 @@
                 <div class="w-full h-full flex items-center justify-center text-gray-500">Loading Player...</div>
             </div>
             <div class="mt-6">
-                <% if (videoInfo) { %>
+                <% if (typeof videoInfo !== 'undefined' && videoInfo) { %>
                     <h1 class="text-xl font-bold mb-4"><%= videoInfo.title %></h1>
                     <div class="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
                         <div class="flex items-center gap-3">
