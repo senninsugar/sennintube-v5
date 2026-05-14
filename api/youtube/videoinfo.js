@@ -17,6 +17,7 @@ async function getVideoInfo(videoId) {
 
                 return {
                     title: v.title || "無題の動画",
+                    description: v.description || "概要欄はありません。",
                     viewCount: v.viewCount || 0,
                     author: v.author || "不明なチャンネル",
                     authorId: v.authorId || "",
@@ -40,6 +41,7 @@ async function getVideoInfo(videoId) {
 
         return {
             title: info.basic_info.title || "取得エラー",
+            description: info.basic_info.short_description || "概要欄情報を取得できませんでした。",
             viewCount: info.basic_info.view_count || 0,
             author: info.basic_info.author || "不明",
             authorId: info.basic_info.channel_id || "",
@@ -54,6 +56,7 @@ async function getVideoInfo(videoId) {
         // 最低限タイトルだけでも表示させるためのダミーデータ
         return {
             title: "動画情報を取得できませんでした",
+            description: "データの取得に失敗しました。",
             viewCount: 0,
             author: "Error",
             authorId: "",
