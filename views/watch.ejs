@@ -5,18 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        .description-content.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        /* UI強化用の微調整 */
+        .search-focus:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+    </style>
 </head>
 <body class="bg-[#0f0f0f] text-white">
-    <nav class="p-4 border-b border-gray-800"><a href="/" class="text-xl font-bold">仙人Tube</a></nav>
+    <!-- ヘッダー：アカウント部分を削除し、検索バーのサイズを最適化 -->
+    <nav class="p-4 border-b border-gray-800 sticky top-0 bg-[#0f0f0f] z-50 flex items-center justify-between gap-4">
+        <a href="/" class="text-xl font-bold flex-shrink-0">仙人Tube</a>
+        
+        <form action="/search" method="GET" class="flex-1 max-w-2xl flex items-center h-10">
+            <div class="flex flex-1 items-center bg-[#121212] border border-gray-700 rounded-l-full px-4 ml-4 h-full search-focus">
+                <span class="material-symbols-outlined text-gray-400 mr-2 text-xl">search</span>
+                <input type="text" name="q" placeholder="検索" class="bg-transparent w-full focus:outline-none text-sm h-full">
+            </div>
+            <button type="submit" class="bg-[#222222] border border-l-0 border-gray-700 rounded-r-full px-5 h-full hover:bg-[#333333] flex items-center justify-center">
+                <span class="material-symbols-outlined text-xl">search</span>
+            </button>
+        </form>
+
+        <div class="flex-shrink-0 w-8 md:w-20"></div> <!-- 左右のバランス用マージン -->
+    </nav>
+
     <main class="flex flex-col lg:flex-row p-6 gap-6">
         <div class="flex-1">
-            <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden">
+            <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden shadow-2xl">
                 <div class="w-full h-full flex items-center justify-center text-gray-500">Loading Player...</div>
             </div>
             <div class="mt-6">
                 <% if (typeof videoInfo !== 'undefined' && videoInfo) { %>
                     <h1 class="text-xl font-bold mb-4"><%= videoInfo.title %></h1>
-                    <div class="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
+                    <div class="flex flex-wrap items-center justify-between border-b border-gray-800 pb-4 mb-4 gap-4">
                         <div class="flex items-center gap-3">
                             <% if (videoInfo.channelThumb) { %>
                                 <img src="<%= videoInfo.channelThumb %>" class="w-11 h-11 rounded-full bg-gray-700">
@@ -27,12 +56,29 @@
                                 <p class="font-bold"><%= videoInfo.channelName %></p>
                                 <p class="text-xs text-gray-400"><%= videoInfo.subscriberCount %></p>
                             </div>
+                            <button class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold ml-2 hover:bg-gray-200 transition">チャンネル登録</button>
                         </div>
-                        <div class="bg-[#272727] px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">thumb_up</span>
-                            <%= videoInfo.likeCount %>
+                        
+                        <!-- アクションボタン：共有ボタンを追加 -->
+                        <div class="flex items-center gap-2">
+                            <div class="bg-[#272727] px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 cursor-pointer hover:bg-[#3f3f3f]">
+                                <span class="material-symbols-outlined text-base text-white">thumb_up</span>
+                                <%= videoInfo.likeCount %>
+                            </div>
+                            <button onclick="shareVideo()" class="bg-[#272727] px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-[#3f3f3f] transition">
+                                <span class="material-symbols-outlined text-base">share</span>
+                                共有
+                            </button>
                         </div>
                     </div>
+
+                    <!-- 概要欄セクション -->
+                    <div class="bg-[#272727] p-3 rounded-xl mb-6 cursor-pointer hover:bg-[#3f3f3f] transition" onclick="toggleDescription()">
+                        <p class="text-sm font-bold mb-1"><%= videoInfo.viewCount.toLocaleString() %> 回視聴</p>
+                        <div id="descriptionContent" class="description-content collapsed text-sm whitespace-pre-wrap"><%= videoInfo.description %></div>
+                        <button id="toggleBtn" class="text-sm font-bold mt-2 text-gray-300">もっと見る</button>
+                    </div>
+
                 <% } else { %>
                     <h1 class="text-xl font-bold mb-4">動画情報を読み込み中...</h1>
                 <% } %>
@@ -44,8 +90,11 @@
                             <div class="flex gap-3 my-4">
                                 <img src="<%= c.authorThumb %>" class="w-10 h-10 rounded-full bg-gray-700">
                                 <div>
-                                    <p class="text-xs text-gray-400"><%= c.author %></p>
-                                    <p class="text-sm"><%= c.text %></p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-xs font-bold"><%= c.author %></p>
+                                        <span class="text-[10px] text-gray-500">1日前</span>
+                                    </div>
+                                    <p class="text-sm mt-1"><%= c.text %></p>
                                 </div>
                             </div>
                         <% }) %>
@@ -59,11 +108,13 @@
             <h3 class="font-bold mb-4">関連動画</h3>
             <% if (typeof related !== 'undefined' && related.length > 0) { %>
                 <% related.forEach(rv => { %>
-                    <a href="/watch?v=<%= rv.id %>" class="flex gap-2 mb-3">
-                        <img src="<%= rv.thumbnail %>" class="w-40 aspect-video object-cover rounded bg-gray-800">
+                    <a href="/watch?v=<%= rv.id %>" class="flex gap-2 mb-3 group">
+                        <div class="relative flex-shrink-0">
+                            <img src="<%= rv.thumbnail %>" class="w-40 aspect-video object-cover rounded bg-gray-800">
+                        </div>
                         <div class="text-xs">
-                            <p class="font-bold line-clamp-2"><%= rv.title %></p>
-                            <p class="text-gray-400"><%= rv.author %></p>
+                            <p class="font-bold line-clamp-2 group-hover:text-blue-400 transition"><%= rv.title %></p>
+                            <p class="text-gray-400 mt-1"><%= rv.author %></p>
                         </div>
                     </a>
                 <% }) %>
@@ -76,6 +127,31 @@
         const streamUrl = "<%= streamUrl %>";
         const container = document.getElementById('playerContainer');
         const method = localStorage.getItem('sennin_play_method') || 'nocookie';
+
+        function toggleDescription() {
+            const content = document.getElementById('descriptionContent');
+            const btn = document.getElementById('toggleBtn');
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                btn.innerText = '一部を表示';
+            } else {
+                content.classList.add('collapsed');
+                btn.innerText = 'もっと見る';
+            }
+        }
+
+        // 共有ボタンの機能
+        function shareVideo() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('URLをクリップボードにコピーしました！');
+            }
+        }
 
         async function initPlayer() {
             if (method === 'stream' && streamUrl && streamUrl !== 'null') {
