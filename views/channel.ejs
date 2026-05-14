@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        .tab-active { border-bottom: 3px solid white; color: white; }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white">
+    <nav class="p-4 border-b border-gray-800 sticky top-0 bg-[#0f0f0f] z-50 flex items-center gap-4">
+        <a href="/" class="text-xl font-bold">仙人Tube</a>
+    </nav>
+
+    <% if (channelInfo.banner) { %>
+        <div class="w-full h-32 md:h-48 lg:h-64 overflow-hidden">
+            <img src="<%= channelInfo.banner %>" class="w-full h-full object-cover">
+        </div>
+    <% } %>
+
+    <header class="p-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6">
+        <img src="<%= channelInfo.thumbnail %>" class="w-32 h-32 rounded-full border-4 border-[#272727]">
+        <div class="text-center md:text-left">
+            <h1 class="text-3xl font-bold"><%= channelInfo.name %></h1>
+            <p class="text-gray-400 mt-2"><%= channelInfo.subscribers %> チャンネル登録者</p>
+            <button class="mt-4 bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition">チャンネル登録</button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto border-b border-gray-800 flex gap-8 px-6">
+        <button onclick="switchTab('videos')" id="tab-videos" class="pb-3 text-sm font-bold tab-active">動画</button>
+        <button onclick="switchTab('posts')" id="tab-posts" class="pb-3 text-sm font-bold text-gray-400">投稿</button>
+    </div>
+
+    <main class="p-6 max-w-6xl mx-auto">
+        <!-- 動画一覧 -->
+        <div id="content-videos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <% if (channelInfo.videos && channelInfo.videos.length > 0) { %>
+                <% channelInfo.videos.forEach(v => { %>
+                    <a href="/watch?v=<%= v.videoId %>" class="group">
+                        <img src="<%= v.videoThumbnails ? v.videoThumbnails[0].url : 'https://i.ytimg.com/vi/' + v.videoId + '/mqdefault.jpg' %>" class="w-full aspect-video object-cover rounded-xl bg-gray-800">
+                        <div class="mt-2">
+                            <p class="font-bold line-clamp-2 text-sm group-hover:text-blue-400 transition"><%= v.title %></p>
+                            <p class="text-[10px] text-gray-400 mt-1"><%= v.viewCountText %> • <%= v.publishedText %></p>
+                        </div>
+                    </a>
+                <% }) %>
+            <% } else { %>
+                <p class="text-gray-500">動画がありません。</p>
+            <% } %>
+        </div>
+
+        <!-- 投稿（コミュニティ）一覧 -->
+        <div id="content-posts" class="hidden space-y-4">
+            <% if (channelInfo.comments && channelInfo.comments.length > 0) { %>
+                <% channelInfo.comments.forEach(post => { %>
+                    <div class="bg-[#272727] p-6 rounded-xl border border-gray-700">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="<%= channelInfo.thumbnail %>" class="w-10 h-10 rounded-full">
+                            <div>
+                                <p class="font-bold text-sm"><%= channelInfo.name %></p>
+                                <p class="text-[10px] text-gray-400">投稿済み</p>
+                            </div>
+                        </div>
+                        <p class="text-sm whitespace-pre-wrap"><%= post.content %></p>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="text-center py-20">
+                    <span class="material-symbols-outlined text-6xl text-gray-700">post_add</span>
+                    <p class="text-gray-500 mt-4">このチャンネルにはまだ投稿がありません。</p>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(type) {
+            const vContent = document.getElementById('content-videos');
+            const pContent = document.getElementById('content-posts');
+            const vTab = document.getElementById('tab-videos');
+            const pTab = document.getElementById('tab-posts');
+
+            if (type === 'videos') {
+                vContent.classList.remove('hidden');
+                pContent.classList.add('hidden');
+                vTab.classList.add('tab-active');
+                vTab.classList.remove('text-gray-400');
+                pTab.classList.remove('tab-active');
+                pTab.classList.add('text-gray-400');
+            } else {
+                vContent.classList.add('hidden');
+                pContent.classList.remove('hidden');
+                pTab.classList.add('tab-active');
+                pTab.classList.remove('text-gray-400');
+                vTab.classList.remove('tab-active');
+                vTab.classList.add('text-gray-400');
+            }
+        }
+    </script>
+</body>
+</html>
