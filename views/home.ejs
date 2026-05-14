@@ -5,33 +5,200 @@
     <title>仙人Tube</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- フォント統一のためのNoto Sans JP -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f0f0f; color: white; font-family: sans-serif; }
-        .suggest-box { display: none; position: absolute; width: 100%; background: #222; border-radius: 0 0 12px 12px; top: 100%; z-index: 100; }
+        /* わかめTubeを参考にした色使いの設定 */
+        body { 
+            background-color: #1a202c; /* bg-gray-900相当 */
+            color: #f7fafc; 
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+        }
+        
+        /* ヘッダー・ヒーローセクションの色使い */
+        .hero-gradient {
+            background-color: #2d3748; /* わかめTubeのhero-section色 */
+        }
+
+        /* サジェストボックスのUI強化 */
+        .suggest-box { 
+            display: none; 
+            position: absolute; 
+            width: 100%; 
+            background: #2d3748; 
+            border: 1px solid #4a5568;
+            border-radius: 0 0 12px 12px; 
+            top: 100%; 
+            z-index: 100; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        
+        .suggest-item:hover {
+            background-color: #4a5568;
+        }
+
+        /* 入力ボックスの透過感とフォーカス */
+        .search-input-wrapper {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid #4a5568;
+            transition: all 0.3s ease;
+        }
+        .search-input-wrapper:focus-within {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: #63b3ed; /* blue-400相当 */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
+        }
+        /* 追加：濃い色のヘッダー用スタイル */
+        header {
+            background-color: #171923; /* より濃いネイビーグレー */
+            border-bottom: 1px solid #2d3748;
+        }
+
+        /* 設定パネルのスタイル */
+        #settingsPanel {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(100%);
+        }
+        #settingsPanel.open {
+            transform: translateX(0);
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center">
-    <div class="w-full max-w-2xl px-4">
-        <h1 class="text-5xl font-bold text-center mb-8 tracking-tighter">仙人Tube</h1>
-        <div class="relative">
-            <form action="/search" method="GET" class="flex items-center bg-[#121212] border border-gray-700 rounded-full px-5 py-3 focus-within:border-blue-500">
-                <span class="material-symbols-outlined text-gray-400 mr-3">search</span>
-                <input type="text" name="q" id="searchInput" autocomplete="off" placeholder="検索" class="bg-transparent w-full outline-none text-lg">
-                <button type="submit" class="hidden"></button>
-            </form>
-            <div id="suggestBox" class="suggest-box shadow-2xl overflow-hidden border border-gray-700 border-t-0"></div>
+<body class="h-screen flex flex-col overflow-hidden">
+    <!-- 追加：ヘッダーセクション（p-6に増やして高さを調整） -->
+    <header class="w-full p-6 flex justify-end items-center space-x-6">
+        <a href="/tools" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">tools</a>
+        <a href="/blog/b/wkthelp" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">ヘルプ</a>
+        <button id="openSettings" class="text-gray-300 hover:text-white transition-colors text-sm font-medium flex items-center">
+            <span class="material-symbols-outlined mr-1 text-base">settings</span>設定
+        </button>
+    </header>
+
+    <div class="flex-grow flex flex-col items-center justify-center">
+        <div class="w-full max-w-2xl px-4">
+            <!-- タイトルの色使いを白へ -->
+            <h1 class="text-5xl font-bold text-center mb-8 tracking-tighter text-white">仙人Tube</h1>
+            
+            <div class="relative">
+                <form action="/search" method="GET" class="search-input-wrapper flex items-center rounded-full px-5 py-3">
+                    <span class="material-symbols-outlined text-gray-400 mr-3">search</span>
+                    <input type="text" name="q" id="searchInput" autocomplete="off" placeholder="検索" class="bg-transparent w-full outline-none text-lg text-white placeholder-gray-500">
+                    <button type="submit" class="hidden"></button>
+                </form>
+                <div id="suggestBox" class="suggest-box overflow-hidden"></div>
+            </div>
+            
+            <!-- わかめTube風のサブテキスト -->
+            <p class="text-center mt-6 text-gray-400 text-sm">好きな動画を検索してみましょう！</p>
         </div>
     </div>
+
+    <!-- 設定パネル本体 -->
+    <div id="settingsPanel" class="fixed top-0 right-0 h-full w-80 bg-[#171923] border-l border-[#2d3748] z-[200] p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <span class="material-symbols-outlined mr-2">settings</span>設定
+            </h2>
+            <button id="closeSettings" class="text-gray-400 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="space-y-6">
+            <!-- 再生方法の選択 -->
+            <div>
+                <label class="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">再生方法の選択</label>
+                <select id="playMethod" class="w-full bg-[#2d3748] border border-[#4a5568] text-white rounded-lg p-2 outline-none focus:border-blue-400 transition-colors">
+                    <option value="nocookie">nocookie (推奨)</option>
+                    <option value="education">education</option>
+                    <option value="stream">stream</option>
+                </select>
+            </div>
+
+            <!-- 履歴の保存設定 -->
+            <div>
+                <label class="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">履歴の保存設定</label>
+                <div class="flex items-center justify-between bg-[#2d3748] p-3 rounded-lg border border-[#4a5568]">
+                    <span class="text-gray-200 text-sm">視聴履歴を保存する</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="saveHistory" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-6 left-0 w-full px-6 text-center">
+            <p class="text-gray-500 text-xs">設定は自動的に保存されます</p>
+        </div>
+    </div>
+
+    <!-- 背景オーバーレイ -->
+    <div id="overlay" class="fixed inset-0 bg-black/50 hidden z-[150]"></div>
 
     <script>
         const input = document.getElementById('searchInput');
         const box = document.getElementById('suggestBox');
+        
+        // 設定パネル制御
+        const settingsPanel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('overlay');
+        const openBtn = document.getElementById('openSettings');
+        const closeBtn = document.getElementById('closeSettings');
+        
+        // 設定要素
+        const playMethodSelect = document.getElementById('playMethod');
+        const saveHistoryCheck = document.getElementById('saveHistory');
+
+        // 設定の読み込みと保存
+        const loadSettings = () => {
+            const method = localStorage.getItem('sennin_play_method') || 'nocookie';
+            const history = localStorage.getItem('sennin_save_history') === 'true';
+            playMethodSelect.value = method;
+            saveHistoryCheck.checked = history;
+        };
+
+        const saveSettings = () => {
+            localStorage.setItem('sennin_play_method', playMethodSelect.value);
+            localStorage.setItem('sennin_save_history', saveHistoryCheck.checked);
+        };
+
+        openBtn.onclick = () => {
+            settingsPanel.classList.add('open');
+            overlay.classList.remove('hidden');
+        };
+
+        const closePanel = () => {
+            settingsPanel.classList.remove('open');
+            overlay.classList.add('hidden');
+        };
+
+        closeBtn.onclick = closePanel;
+        overlay.onclick = closePanel;
+
+        // イベントリスナー
+        playMethodSelect.onchange = saveSettings;
+        saveHistoryCheck.onchange = saveSettings;
+
+        // 初期ロード
+        loadSettings();
+
+        // 検索サジェスト
         input.addEventListener('input', async () => {
             if(!input.value) { box.style.display = 'none'; return; }
             const res = await fetch(`/api/suggests?q=${input.value}`);
             const data = await res.json();
-            box.innerHTML = data.map(s => `<div class="p-3 hover:bg-stone-800 cursor-pointer" onclick="location.href='/search?q=${s}'">${s}</div>`).join('');
+            // ホバー時の色使いを「わかめTube」のカードホバー色に合わせる
+            box.innerHTML = data.map(s => `<div class="p-3 suggest-item cursor-pointer text-gray-200 transition-colors" onclick="location.href='/search?q=${s}'">${s}</div>`).join('');
             box.style.display = 'block';
+        });
+
+        // 枠外クリックでサジェストを閉じる
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !box.contains(e.target)) {
+                box.style.display = 'none';
+            }
         });
     </script>
 </body>
