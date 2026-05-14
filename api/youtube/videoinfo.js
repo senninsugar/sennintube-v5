@@ -9,16 +9,15 @@ async function getVideoInfo(videoId) {
             const res = await axios.get(`${baseUrl}/videos/${videoId}`, { timeout: 3000 });
             if (res.data) {
                 const v = res.data;
-                // Invidiousのデータ構造をEJS側の変数名に正確にマッピング
                 return {
-                    title: v.title,
-                    viewCount: v.viewCount,
-                    author: v.author,
-                    authorId: v.authorId,
+                    title: v.title || "",
+                    viewCount: v.viewCount || 0,
+                    author: v.author || "",
+                    authorId: v.authorId || "",
                     authorThumb: v.authorThumbnails ? v.authorThumbnails[0].url : "",
                     likeCount: v.likeCount ? v.likeCount.toLocaleString() : "非公開",
-                    channelName: v.author,
-                    channelThumb: v.authorThumbnails ? v.authorThumbnails[0].url : "",
+                    channelName: v.author || "",
+                    channelThumb: v.authorThumbnails ? v.authorThumbnails[v.authorThumbnails.length - 1].url : "",
                     subscriberCount: v.subCountText || ""
                 };
             }
@@ -45,7 +44,17 @@ async function getVideoInfo(videoId) {
         };
     } catch (e) {
         console.error(e);
-        return null;
+        return {
+            title: "情報取得エラー",
+            viewCount: 0,
+            author: "不明",
+            authorId: "",
+            authorThumb: "",
+            likeCount: "非公開",
+            channelName: "不明",
+            channelThumb: "",
+            subscriberCount: ""
+        };
     }
 }
 
