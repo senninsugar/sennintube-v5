@@ -3,7 +3,6 @@ const axios = require('axios');
 const { INSTANCE } = require('../invidious');
 
 async function getChannelInfo(channelId) {
-    // Invidious優先
     for (let url of INSTANCE) {
         try {
             const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
@@ -16,7 +15,7 @@ async function getChannelInfo(channelId) {
                     subscribers: c.subCountText || "",
                     banner: c.authorBanners ? c.authorBanners[0].url : "",
                     videos: c.latestVideos || [],
-                    comments: c.comments || [] // Invidiousでは投稿がここに含まれる場合がある
+                    comments: c.comments || []
                 };
             }
         } catch (e) {
@@ -24,7 +23,6 @@ async function getChannelInfo(channelId) {
         }
     }
 
-    // フォールバック: YouTube.js
     try {
         const yt = await getYouTube();
         const channel = await yt.getChannel(channelId);
