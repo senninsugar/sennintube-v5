@@ -20,9 +20,35 @@
         #methodOverlay {
             backdrop-filter: blur(8px);
         }
+
+        /* 読み込みアニメーション */
+        .skeleton {
+            background: linear-gradient(90deg, #272727 25%, #3f3f3f 50%, #272727 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* エラーアラートのアニメーション */
+        #errorAlert {
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+        }
+        #errorAlert.show {
+            transform: translateX(0);
+        }
     </style>
 </head>
 <body class="bg-[#0f0f0f] text-white">
+    <!-- エラーアラート -->
+    <div id="errorAlert" class="fixed top-20 right-4 z-[200] bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
+        <span class="material-symbols-outlined">error</span>
+        <span id="errorMsg">エラーが発生しました</span>
+    </div>
+
     <!-- 再生方法選択オーバーレイ -->
     <div id="methodOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 hidden">
         <div class="bg-[#272727] p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-700">
@@ -61,7 +87,9 @@
 
     <main class="flex flex-col md:flex-row p-6 gap-6">
         <div class="flex-1">
-            <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden shadow-2xl">
+            <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden shadow-2xl relative">
+                <!-- 読み込みアニメーション -->
+                <div id="playerSkeleton" class="absolute inset-0 skeleton z-10"></div>
                 <div class="w-full h-full flex items-center justify-center text-gray-500">Loading Player...</div>
             </div>
             <div class="mt-6">
@@ -69,15 +97,17 @@
                     <h1 class="text-xl font-bold mb-4"><%= videoInfo.title %></h1>
                     <div class="flex flex-wrap items-center justify-between border-b border-gray-800 pb-4 mb-4 gap-4">
                         <div class="flex items-center gap-3">
-                            <% if (videoInfo.channelThumb) { %>
-                                <img src="<%= videoInfo.channelThumb %>" class="w-11 h-11 rounded-full bg-gray-700">
-                            <% } else { %>
-                                <div class="w-11 h-11 rounded-full bg-gray-700 flex items-center justify-center">?</div>
-                            <% } %>
-                            <div>
-                                <p class="font-bold"><%= videoInfo.channelName %></p>
-                                <p class="text-xs text-gray-400"><%= videoInfo.subscriberCount %></p>
-                            </div>
+                            <a href="/channel/<%= videoInfo.authorId %>" class="flex items-center gap-3 hover:opacity-80 transition">
+                                <% if (videoInfo.channelThumb) { %>
+                                    <img src="<%= videoInfo.channelThumb %>" class="w-11 h-11 rounded-full bg-gray-700">
+                                <% } else { %>
+                                    <div class="w-11 h-11 rounded-full bg-gray-700 flex items-center justify-center">?</div>
+                                <% } %>
+                                <div>
+                                    <p class="font-bold"><%= videoInfo.channelName %></p>
+                                    <p class="text-xs text-gray-400"><%= videoInfo.subscriberCount %></p>
+                                </div>
+                            </a>
                             <button id="subBtn" onclick="toggleSub()" class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold ml-2 hover:bg-gray-200 transition">チャンネル登録</button>
                         </div>
                         
@@ -149,6 +179,17 @@
         const streamUrl = "<%= streamUrl %>";
         const container = document.getElementById('playerContainer');
         const overlay = document.getElementById('methodOverlay');
+        const skeleton = document.getElementById('playerSkeleton');
+
+        function showError(msg) {
+            const alert = document.getElementById('errorAlert');
+            const msgEl = document.getElementById('errorMsg');
+            msgEl.innerText = msg;
+            alert.classList.add('show');
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
 
         function toggleDescription() {
             const content = document.getElementById('descriptionContent');
@@ -218,24 +259,27 @@
             const expiry = localStorage.getItem('sennin_method_expiry');
             const currentMethod = methodOverride || savedMethod;
 
-            // 期限切れまたは未設定の場合
             if (!currentMethod || !expiry || Date.now() > parseInt(expiry)) {
                 overlay.classList.remove('hidden');
+                skeleton.style.display = 'none';
                 return;
             }
 
-            if (currentMethod === 'stream' && streamUrl && streamUrl !== 'null') {
-                container.innerHTML = `<video src="${streamUrl}" controls autoplay class="w-full h-full"></video>`;
-            } else if (currentMethod === 'education') {
-                try {
-                    const res = await fetch(`/watch/api/youtube/edu?v=${videoId}`);
+            try {
+                if (currentMethod === 'stream' && streamUrl && streamUrl !== 'null') {
+                    container.innerHTML = `<video src="${streamUrl}" controls autoplay class="w-full h-full" onloadeddata="document.getElementById('playerSkeleton').style.display='none'"></video>`;
+                } else if (currentMethod === 'education') {
+                    const res = await fetch(`/api/youtube/edu?v=${videoId}`);
+                    if (!res.ok) throw new Error('動画の取得に失敗しました');
                     const data = await res.json();
-                    container.innerHTML = `<iframe src="${data.url}" class="w-full h-full" allowfullscreen allow="autoplay"></iframe>`;
-                } catch (e) {
-                    container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" class="w-full h-full" allowfullscreen allow="autoplay"></iframe>`;
+                    container.innerHTML = `<iframe src="${data.url}" class="w-full h-full" allowfullscreen allow="autoplay" onload="document.getElementById('playerSkeleton').style.display='none'"></iframe>`;
+                } else {
+                    container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" class="w-full h-full" allowfullscreen allow="autoplay" onload="document.getElementById('playerSkeleton').style.display='none'"></iframe>`;
                 }
-            } else {
-                container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" class="w-full h-full" allowfullscreen allow="autoplay"></iframe>`;
+            } catch (e) {
+                skeleton.style.display = 'none';
+                showError('動画の再生中にエラーが発生しました。別の再生方法を試してください。');
+                container.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-500 px-4 text-center">再生エラーが発生しました。<br>設定から再生方法を変更してください。</div>`;
             }
         }
 
