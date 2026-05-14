@@ -17,9 +17,31 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 1px #3b82f6;
         }
+        #methodOverlay {
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 <body class="bg-[#0f0f0f] text-white">
+    <!-- 再生方法選択オーバーレイ -->
+    <div id="methodOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 hidden">
+        <div class="bg-[#272727] p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-700">
+            <h2 class="text-xl font-bold mb-6 text-center">あなたに最適な再生方法を<br>選択してください</h2>
+            <div class="grid gap-4">
+                <button onclick="setMethod('nocookie')" class="w-full py-4 bg-[#3f3f3f] hover:bg-[#4f4f4f] rounded-xl font-bold transition px-6 text-center">
+                    <span>標準 (NoCookie)</span>
+                </button>
+                <button onclick="setMethod('education')" class="w-full py-4 bg-[#3f3f3f] hover:bg-[#4f4f4f] rounded-xl font-bold transition px-6 text-center">
+                    <span>edu</span>
+                </button>
+                <button onclick="setMethod('stream')" class="w-full py-4 bg-[#3f3f3f] hover:bg-[#4f4f4f] rounded-xl font-bold transition px-6 text-center">
+                    <span>ストリーム再生</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-6 text-center">※選択した設定は2週間保存されます。</p>
+        </div>
+    </div>
+
     <!-- ヘッダー：アカウント部分を削除し、検索バーのサイズを最適化 -->
     <nav class="p-4 border-b border-gray-800 sticky top-0 bg-[#0f0f0f] z-50 flex items-center justify-between gap-4">
         <a href="/" class="text-xl font-bold flex-shrink-0">仙人Tube</a>
@@ -37,7 +59,7 @@
         <div class="flex-shrink-0 w-8 md:w-20"></div> <!-- 左右のバランス用マージン -->
     </nav>
 
-    <main class="flex flex-col lg:flex-row p-6 gap-6">
+    <main class="flex flex-col md:flex-row p-6 gap-6">
         <div class="flex-1">
             <div id="playerContainer" class="w-full aspect-video rounded-xl bg-black overflow-hidden shadow-2xl">
                 <div class="w-full h-full flex items-center justify-center text-gray-500">Loading Player...</div>
@@ -56,7 +78,7 @@
                                 <p class="font-bold"><%= videoInfo.channelName %></p>
                                 <p class="text-xs text-gray-400"><%= videoInfo.subscriberCount %></p>
                             </div>
-                            <button class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold ml-2 hover:bg-gray-200 transition">チャンネル登録</button>
+                            <button id="subBtn" onclick="toggleSub()" class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold ml-2 hover:bg-gray-200 transition">チャンネル登録</button>
                         </div>
                         
                         <!-- アクションボタン：共有ボタンを追加 -->
@@ -104,13 +126,13 @@
                 </div>
             </div>
         </div>
-        <div class="w-full lg:w-96">
+        <div class="w-full md:w-80 lg:w-96 flex-shrink-0">
             <h3 class="font-bold mb-4">関連動画</h3>
             <% if (typeof related !== 'undefined' && related.length > 0) { %>
                 <% related.forEach(rv => { %>
                     <a href="/watch?v=<%= rv.id %>" class="flex gap-2 mb-3 group">
                         <div class="relative flex-shrink-0">
-                            <img src="<%= rv.thumbnail %>" class="w-40 aspect-video object-cover rounded bg-gray-800">
+                            <img src="<%= rv.thumbnail %>" class="w-32 lg:w-40 aspect-video object-cover rounded bg-gray-800">
                         </div>
                         <div class="text-xs">
                             <p class="font-bold line-clamp-2 group-hover:text-blue-400 transition"><%= rv.title %></p>
@@ -126,7 +148,7 @@
         const videoId = "<%= videoId %>";
         const streamUrl = "<%= streamUrl %>";
         const container = document.getElementById('playerContainer');
-        const method = localStorage.getItem('sennin_play_method') || 'nocookie';
+        const overlay = document.getElementById('methodOverlay');
 
         function toggleDescription() {
             const content = document.getElementById('descriptionContent');
@@ -137,6 +159,35 @@
             } else {
                 content.classList.add('collapsed');
                 btn.innerText = 'もっと見る';
+            }
+        }
+
+        // チャンネル登録機能
+        function toggleSub() {
+            const btn = document.getElementById('subBtn');
+            const channelId = "<%= videoInfo ? videoInfo.channelName : 'unknown' %>";
+            const isSubbed = localStorage.getItem('sub_' + channelId) === 'true';
+
+            if (isSubbed) {
+                localStorage.removeItem('sub_' + channelId);
+                btn.innerText = 'チャンネル登録';
+                btn.classList.replace('bg-gray-600', 'bg-white');
+                btn.classList.replace('text-white', 'text-black');
+            } else {
+                localStorage.setItem('sub_' + channelId, 'true');
+                btn.innerText = '登録済み';
+                btn.classList.replace('bg-white', 'bg-gray-600');
+                btn.classList.replace('text-black', 'text-white');
+            }
+        }
+
+        function checkSubStatus() {
+            const btn = document.getElementById('subBtn');
+            const channelId = "<%= videoInfo ? videoInfo.channelName : 'unknown' %>";
+            if (localStorage.getItem('sub_' + channelId) === 'true') {
+                btn.innerText = '登録済み';
+                btn.classList.replace('bg-white', 'bg-gray-600');
+                btn.classList.replace('text-black', 'text-white');
             }
         }
 
@@ -153,10 +204,29 @@
             }
         }
 
-        async function initPlayer() {
-            if (method === 'stream' && streamUrl && streamUrl !== 'null') {
+        // 再生設定
+        function setMethod(method) {
+            const expiry = Date.now() + (14 * 24 * 60 * 60 * 1000); // 2週間
+            localStorage.setItem('sennin_play_method', method);
+            localStorage.setItem('sennin_method_expiry', expiry);
+            overlay.classList.add('hidden');
+            initPlayer(method);
+        }
+
+        async function initPlayer(methodOverride) {
+            const savedMethod = localStorage.getItem('sennin_play_method');
+            const expiry = localStorage.getItem('sennin_method_expiry');
+            const currentMethod = methodOverride || savedMethod;
+
+            // 期限切れまたは未設定の場合
+            if (!currentMethod || !expiry || Date.now() > parseInt(expiry)) {
+                overlay.classList.remove('hidden');
+                return;
+            }
+
+            if (currentMethod === 'stream' && streamUrl && streamUrl !== 'null') {
                 container.innerHTML = `<video src="${streamUrl}" controls autoplay class="w-full h-full"></video>`;
-            } else if (method === 'education') {
+            } else if (currentMethod === 'education') {
                 try {
                     const res = await fetch(`/watch/api/youtube/edu?v=${videoId}`);
                     const data = await res.json();
@@ -169,6 +239,7 @@
             }
         }
 
+        checkSubStatus();
         initPlayer();
     </script>
 </body>
